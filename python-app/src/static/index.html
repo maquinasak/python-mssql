@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="/static/micss.css">
+</head>
+<body>
+    <div class="container">
+
+        <div id="menu">
+            <ul class="nav justify-content-end">
+                <li class="nav-item">
+                  <a class="nav-link" href="/">Inicio</a>
+                </li>
+
+                <li class="nav-item">
+                  <a class="nav-link disabled" href="#">Disabled</a>
+                </li>
+              </ul>
+    
+        </div>
+
+        <hr>
+
+        <div id="nuevo">
+
+        </div>
+            <form id="nuevoUsuario">
+                <input type="text" name="nombre" id="nombre" placeholder="nombre" >
+                <input type="text" name="apellido" id="apellido" placeholder="apellido" >
+                <input type="email" name="email" id="email" placeholder="email">
+                <input type="date" name="fechanac" id="fechanac" placeholder="fecha nacimiento">
+                <button type="submit">Agregar Usuario</button>
+                
+            </form>
+
+        <hr>
+
+        <div id="principal">
+    
+            <button onclick="cargarUsuarios()">Buscar Usuarios</button>
+    
+    
+            <div id="grilla">
+    
+            </div>
+    
+    
+        </div>
+    
+        <hr>
+
+        <div id="footer">
+            <footer>
+                <p>Author: Pepe</p>
+                <p><a href="mailto:pepe@gmail.com">pepe@gmail.com</a></p>
+            </footer>
+
+        </div>
+
+
+
+    </div>
+
+
+
+
+    <script type="text/javascript" src="/static/myjs.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</body>
+</html>

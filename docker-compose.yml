@@ -1,0 +1,51 @@
+
+services:
+  sqlserver-db:
+    build:
+      context: ./sqlserver
+    container_name: mk-sqlserver
+    networks:
+      - back_network
+    restart: unless-stopped
+    env_file:
+      - sqlserver.env
+      - sapassword.env
+    ports:
+      - '1433:1433'
+    volumes:
+      # - ./sql-server-data:/var/opt/mssql/
+      - sqldata:/var/opt/mssql/data
+      - sqllog:/var/opt/mssql/log
+      - sqlsecrets:/var/opt/mssql/secrets
+      # - ./sqlbackup:/var/opt/mssql/backup
+      # - ./sql/mssql/:/var/opt/mssql/
+      # - ./sql/sqlserver/:/var/opt/sqlserver/
+
+  python-app:
+    build:
+      context: ./python-app  # Asegúrate de que este directorio contenga tu Dockerfile
+    container_name: mk-python
+    ports:
+      - "5000" # no expone puertos fuera de docker
+    depends_on:
+      - sqlserver-db
+    environment:
+      - FLASK_ENV=development
+      # - MYSQL_HOST=mysql
+      # - MYSQL_USER=root
+      # - MYSQL_PASSWORD=root_password
+      # - MYSQL_DB=mydatabase
+    volumes:
+      - ./python-app/src:/app
+    networks:
+      - back_network
+
+networks:
+  back_network:
+    driver: bridge
+
+volumes:
+  sqldata:
+  sqllog:
+  sqlsecrets:
+  python-app:

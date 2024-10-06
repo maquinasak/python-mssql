@@ -1,0 +1,10 @@
+FROM mcr.microsoft.com/mssql/server:2019-latest
+
+# Switch to root user
+USER root
+
+# Expose SQL Server port
+EXPOSE 1433
+
+# Entry point
+ENTRYPOINT ["/opt/mssql/bin/sqlservr"]
