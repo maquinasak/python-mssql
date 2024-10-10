@@ -21,24 +21,25 @@ services:
       # - ./sql/mssql/:/var/opt/mssql/
       # - ./sql/sqlserver/:/var/opt/sqlserver/
 
-  python-app:
-    build:
-      context: ./python-app  # Asegúrate de que este directorio contenga tu Dockerfile
-    container_name: mk-python
-    ports:
-      - "5000" # no expone puertos fuera de docker
-    depends_on:
-      - sqlserver-db
-    environment:
-      - FLASK_ENV=development
-      # - MYSQL_HOST=mysql
-      # - MYSQL_USER=root
-      # - MYSQL_PASSWORD=root_password
-      # - MYSQL_DB=mydatabase
-    volumes:
-      - ./python-app/src:/app
-    networks:
-      - back_network
+  # python-app:
+  #   build:
+  #     context: ./python-app  # Asegúrate de que este directorio contenga tu Dockerfile
+  #   container_name: mk-python
+  #   ports:
+  #     - "80:5000" # 80 es el exterior, 5000 el interior
+  #     - "5000" # no expone puertos fuera de docker
+  #   depends_on:
+  #     - sqlserver-db
+  #   environment:
+  #     - FLASK_ENV=development
+  #     # - MYSQL_HOST=mysql
+  #     # - MYSQL_USER=root
+  #     # - MYSQL_PASSWORD=root_password
+  #     # - MYSQL_DB=mydatabase
+  #   volumes:
+  #     - ./python-app/src:/app
+  #   networks:
+  #     - back_network
 
 networks:
   back_network:

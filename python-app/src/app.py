@@ -1,28 +1,53 @@
 from flask import Flask, request, jsonify, send_from_directory
-import mysql.connector
+import pyodbc
+
+# Configuración de la conexión a SQL Server
+server = '.'
+port = 7000
+database = 'prueba2'
+username = 'sa'
+password = 'Password12345'
+connection_string = f'DRIVER={{ODBC Driver 18 for SQL Server}};SERVER={server};DATABASE={database};UID={username};PWD={password};TrustServerCertificate=yes'
+
+# connection_string = f"mssql+pyodbc://{username}:{password}@{server}:{port}/{database}?driver=ODBC+Driver+17+for+SQL+Server"
+
+# connection_string = f"{{SQL Server}};SERVER={server};UID={username};PWD={password}"
+
 
 app = Flask(__name__,static_folder='static')
 
+def get_db_connection():
+    conn = pyodbc.connect(connection_string)
+    # Desactivar autocommit para manejar transacciones manualmente
+    conn.autocommit = False
+    return conn
 
-# MySQL connection details
-db_host = "mysql"
-db_user = "user"
-db_password = "password"
-db_name = "mydatabase"
 
-# Function to connect to the database
-def connect_to_db():
+def get_next_usuario():
     try:
-        conn = mysql.connector.connect(
-            host=db_host,
-            user=db_user,
-            password=db_password,
-            database=db_name
-        )
-        return conn
-    except mysql.connector.Error as err:
-        print(f"Error connecting to MySQL: {err}")
-        return None
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        query = "Select isnull(max(id),0) as ultimo from usuarios"
+        cursor.execute(query)
+
+        # Recuperar todas las filas
+        rows = cursor.fetchall()
+        
+        # Obtener los nombres de las columnas
+        columns = [column[0] for column in cursor.description]
+
+        # Convertir las filas en una lista de diccionarios
+        results = []
+        for row in rows:
+            results.append(dict(zip(columns, row)))
+
+        return results
+
+    except Exception as e:
+        raise Exception(f"error: ${e}") 
+    
+
 
 # # Endpoint to create a new usuario
 # @app.route('/', methods=['GET'])
@@ -37,114 +62,94 @@ def serve_index():
 
 
 
-# Endpoint to create a new usuario
 @app.route('/usuarios', methods=['POST'])
 def create_usuario():
-    data = request.get_json()
-    email = data.get('email')
+    data = request.json
     nombre = data.get('nombre')
     apellido = data.get('apellido')
+    email = data.get('email')
+    contrasenia = data.get('contrasenia')
     fechanac = data.get('fechanac')
-
-    conn = connect_to_db()
-    cursor = conn.cursor()
-
-    sql = "INSERT INTO usuarios (email, nombre, apellido, fechanac) VALUES (%s, %s, %s, %s)"
-    val = (email, nombre, apellido, fechanac)
+    id = get_next_usuario()
+    
+    if not nombre or not apellido or not email or not contrasenia or not fechanac:
+        return jsonify({'error': 'faltan campos'}), 400
 
     try:
-        cursor.execute(sql, val)
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        query = "insert into usuarios (id,nombre,apellido,email,contrasenia,fechanac) values(?,?,?,?,?,?)"
+        cursor.execute(query, (id,nombre,apellido,email,contrasenia,fechanac))
         conn.commit()
-        return jsonify({'message': 'Usuario creado correctamente'}), 201
-    except mysql.connector.Error as err:
-        print(f"Error inserting usuario: {err}")
-        return jsonify({'error': 'Error al crear el usuario'}), 500
+
+        return jsonify({'message': 'Update successful'}), 200
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': str(e)}), 500
+
     finally:
+        if cursor:
+            cursor.close()
         if conn:
             conn.close()
 
-# Endpoint to get all usuarios
+
+
 @app.route('/usuarios', methods=['GET'])
 def get_usuarios():
-    conn = connect_to_db()
-    cursor = conn.cursor()
-
-    sql = "SELECT * FROM usuarios"
-    cursor.execute(sql)
-    usuarios = cursor.fetchall()
-    data = {
-        "rta":"ok",
-        "usuarios": usuarios
-    }
-
-    return jsonify(data), 200
-
-# Endpoint to get a usuario by email
-@app.route('/usuarios/<string:email>', methods=['GET'])
-def get_usuario(email):
-    conn = connect_to_db()
-    cursor = conn.cursor()
-
-    sql = "SELECT * FROM usuarios WHERE email = %s"
-    val = (email,)
-    cursor.execute(sql, val)
-    usuario = cursor.fetchone()
-
-    data = {
-        "rta":"ok",
-    }
-
-    if usuario:
-        data["usuarios"] = usuario
-        return jsonify(data), 200
-    else:
-        data["error"] = "usuario no encontrado"
-        return jsonify(data), 404
-
-# Endpoint to update a usuario
-@app.route('/usuarios/<string:email>', methods=['PUT'])
-def update_usuario(email):
-    data = request.get_json()
-    nombre = data.get('nombre')
-    apellido = data.get('apellido')
-    fechanac = data.get('fechanac')
-
-    conn = connect_to_db()
-    cursor = conn.cursor()
-
-    sql = "UPDATE usuarios SET nombre = %s, apellido = %s, fechaNac = %s WHERE email = %s"
-    val = (nombre, apellido, fechanac, email)
-
     try:
-        cursor.execute(sql, val)
-        conn.commit()
-        return jsonify({'message': 'Usuario actualizado correctamente'}), 200
-    except mysql.connector.Error as err:
-        print(f"Error updating usuario: {err}")
-        return jsonify({'error': 'Error al actualizar el usuario'}), 500
-    finally:
-        if conn:
-            conn.close()
+        results = get_next_usuario()
+        return jsonify(results), 200
 
-# Endpoint to delete a usuario
-@app.route('/usuarios/<string:email>', methods=['DELETE'])
-def delete_usuario(email):
-    conn = connect_to_db()
-    cursor = conn.cursor()
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
 
-    sql = "DELETE FROM usuarios WHERE email = %s"
-    val = (email,)
+# @app.route('/usuarios/<int:id>', methods=['GET'])
+# def get_usuario(id):
+#     usuario = Usuario.query.get(id)
+#     if usuario:
+#         return jsonify(usuario.to_dict())
+#     else:
+#         return jsonify({'message': 'Usuario no encontrado'}), 404
 
-    try:
-        cursor.execute(sql, val)
-        conn.commit()
-        return jsonify({'message': 'Usuario eliminado correctamente'}), 200
-    except mysql.connector.Error as err:
-        print(f"Error deleting usuario: {err}")
-        return jsonify({'error': 'Error al eliminar el usuario'}), 500
-    finally:
-        if conn:
-            conn.close()
+# @app.route('/usuarios/<int:id>', methods=['PUT'])
+# def update_usuario(id):
+#     usuario = Usuario.query.get(id)
+#     if usuario:
+#         data = request.get_json()
+#         usuario.name = data['name']
+#         usuario.email = data['email']
+#         usuario.surname = data['surname']
+#         db.session.commit()
+#         return jsonify({'message': 'Usuario actualizado correctamente'})
+#     else:
+#         return jsonify({'message': 'Usuario no encontrado'}), 404
+    
+
+# @app.route('/usuarios/<int:id>', methods=['DELETE'])
+# def delete_usuario(id):
+#     usuario = Usuario.query.get(id)
+#     if usuario:
+#         db.session.delete(usuario)
+#         db.session.commit()
+#         return jsonify({'message': 'Usuario eliminado correctamente'})
+#     else:
+#         return jsonify({'message': 'Usuario no encontrado'}), 404
+    
+
+
+# def to_dict(self):
+#     return {
+#         'id': self.id,
+#         'nombre': self.nombre,
+#         'apellido': self.apellido,
+#         'email': self.email,
+#         'contrasenia':self.contrasenia
+#     }
+
 
 if __name__ == '__main__':
     app.run(debug=True,host='0.0.0.0')
