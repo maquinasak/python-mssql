@@ -14,12 +14,9 @@ services:
       - '1433:1433'
     volumes:
       # - ./sql-server-data:/var/opt/mssql/
-      - sqldata:/var/opt/mssql/data
-      - sqllog:/var/opt/mssql/log
-      - sqlsecrets:/var/opt/mssql/secrets
-      # - ./sqlbackup:/var/opt/mssql/backup
-      # - ./sql/mssql/:/var/opt/mssql/
-      # - ./sql/sqlserver/:/var/opt/sqlserver/
+      - ./sqldata:/var/opt/mssql/data
+      - ./sqllog:/var/opt/mssql/log
+      - ./sqlsecrets:/var/opt/mssql/secrets
 
   # python-app:
   #   build:
@@ -27,7 +24,7 @@ services:
   #   container_name: mk-python
   #   ports:
   #     - "80:5000" # 80 es el exterior, 5000 el interior
-  #     - "5000" # no expone puertos fuera de docker
+  #     # - "5000" # no expone puertos fuera de docker
   #   depends_on:
   #     - sqlserver-db
   #   environment:
@@ -46,7 +43,4 @@ networks:
     driver: bridge
 
 volumes:
-  sqldata:
-  sqllog:
-  sqlsecrets:
   python-app:
